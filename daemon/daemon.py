@@ -926,30 +926,24 @@ def _get_candidate_file_descriptor_ranges(exclude):
         in this process, excluding those integers in the `exclude`
         collection.
         """
-    candidates_list = sorted(_get_candidate_file_descriptors(exclude))
+    start = 0
+    maxfd = get_maximum_file_descriptors()
+    exclude = _sanitize_file_descriptors(exclude, maxfd)
+
     ranges = []
+    for fd in sorted(exclude):
+        # Create a file descriptor range from a starting point to an
+        # excluded file descriptor. The starting point is either 0 or the end
+        # of the previous range. Note that consecutive excluded file
+        # descriptors are skipped.
+        if fd > start:
+            ranges.append(FileDescriptorRange(low=start, high=fd))
+        start = fd + 1
 
-    def append_range_if_needed(candidate_range):
-        if (candidate_range.low < candidate_range.high):
-            # The range is not empty.
-            ranges.append(candidate_range)
-
-    this_range = (
-        FileDescriptorRange(
-                low=min(candidates_list),
-                high=(min(candidates_list) + 1))
-        if candidates_list else FileDescriptorRange(low=0, high=0))
-    for fd in candidates_list[1:]:
-        high = fd + 1
-        if this_range.high == fd:
-            # This file descriptor extends the current range.
-            this_range = this_range._replace(high=high)
-        else:
-            # The previous range has ended at a gap.
-            append_range_if_needed(this_range)
-            # This file descriptor begins a new range.
-            this_range = FileDescriptorRange(low=fd, high=high)
-    append_range_if_needed(this_range)
+    # If we didn't cover all possible file descriptors until the highest one,
+    # add an extra range from the last starting point.
+    if start < maxfd:
+        ranges.append(FileDescriptorRange(low=start, high=maxfd))
     return ranges
 
 
