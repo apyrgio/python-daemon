@@ -1477,6 +1477,40 @@ class _get_candidate_file_descriptors_TestCase(scaffold.TestCaseWithScenarios):
         self.assertEqual(result, self.expected_result)
 
 
+class _sanitize_file_descriptors_TestCase(scaffold.TestCaseWithScenarios):
+    """ Test cases for function `_sanitize_file_descriptors`. """
+
+    scenarios = [
+            ('exclude-one', {
+                'test_kwargs': {
+                    'fds': {4},
+                    'maxfd': 5,
+                    },
+                'expected_result': {4},
+                }),
+            ('exclude-none', {
+                'test_kwargs': {
+                    'fds': set(),
+                    'maxfd': 5,
+                },
+                'expected_result': set(),
+                }),
+            ('exclude-out-of-bounds', {
+                'test_kwargs': {
+                    'fds': {-1, 6},
+                    'maxfd': 5,
+                },
+                'expected_result': set(),
+                }),
+            ]
+
+    def test_returns_expected_file_descriptors(self):
+        """ Should return the expected set of file descriptors. """
+        result = daemon.daemon._sanitize_file_descriptors(
+                **self.test_kwargs)
+        self.assertEqual(result, self.expected_result)
+
+
 class _get_candidate_file_descriptor_ranges_TestCase(
         scaffold.TestCaseWithScenarios):
     """ Test cases for function `_get_candidate_file_descriptor_ranges`. """

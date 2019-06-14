@@ -890,6 +890,22 @@ def _get_candidate_file_descriptors(exclude):
     return candidates
 
 
+def _sanitize_file_descriptors(fds, maxfd):
+    """ Remove invalid file descriptors from a set.
+
+        :param fds: A collection (set) of file descriptors.
+        :param maxfd: The maximum number of open file descriptors in the
+            process.
+        :return: A subset of the input, where invalid file descriptors are
+            removed.
+
+        Remove invalid file descriptors from a set. Invalid file descriptors
+        are negative numbers, or numbers larger than the highest possible file
+        descriptor number for the process.
+        """
+    return {fd for fd in fds if 0 <= fd < maxfd}
+
+
 FileDescriptorRange = collections.namedtuple(
         'FileDescriptorRange', ['low', 'high'])
 
