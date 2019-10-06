@@ -884,9 +884,13 @@ def _get_candidate_file_descriptors(exclude):
         The `maxfd` value is determined from the standard library
         `resource` module.
         """
-    maxfd = get_maximum_file_descriptors()
-    candidates = set(range(0, maxfd)).difference(exclude)
-    return candidates
+
+    if sys.platform.startswith("linux"):
+        candidates = [int(fd) for fd in os.listdir("/proc/self/fd")]
+    else:
+        maxfd = get_maximum_file_descriptors()
+        candidates = range(0, maxfd)
+    return set(candidates).difference(exclude)
 
 
 def _get_candidate_file_descriptor_ranges(exclude):
